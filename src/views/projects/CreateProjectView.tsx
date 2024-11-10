@@ -9,11 +9,13 @@ import { useMutation } from "@tanstack/react-query";
 const CreateProjectView = () => {
 
     const navigate = useNavigate()
+
     const initialValues : ProjectFormData = {
         projectName: "",
         clientName: "",
         description: ""
     }
+    
     const { register, handleSubmit, formState: {errors} } = useForm({defaultValues : initialValues})
 
     const { mutate } = useMutation({
@@ -27,7 +29,7 @@ const CreateProjectView = () => {
         }
     })
 
-    const handleForm = (formData: ProjectFormData) => mutate(formData)
+    const handleFormCreateProject = (formData: ProjectFormData) => mutate(formData)
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -46,7 +48,7 @@ const CreateProjectView = () => {
       </nav>
       <form 
         className="mt-10 bg-white shadow-lg p-10 rounded-lg"
-        onSubmit={handleSubmit(handleForm)}
+        onSubmit={handleSubmit(handleFormCreateProject)}
         noValidate
       >
         <ProjectForm 
