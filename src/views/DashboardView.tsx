@@ -13,7 +13,7 @@ const DashboardView = () => {
     queryKey: ["projects"],
     queryFn: getProjects,
   });
-
+  
   const { mutate } = useMutation({
     mutationFn: deleteProjectById,
     onError: (error) => {
