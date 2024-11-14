@@ -24,7 +24,7 @@ const TaskCard = ({ task }: TaskCardProps) => {
             toast.error(error.message)
         },
         onSuccess: (data) => {
-            queryClient.invalidateQueries({queryKey : ["editProject", projectId]}) // realizar un refresh de la consulta para actualizar datos
+            queryClient.invalidateQueries({queryKey : ["project", projectId]}) // realizar un refresh de la consulta para actualizar datos
             toast.success(data?.message)
         }
     })

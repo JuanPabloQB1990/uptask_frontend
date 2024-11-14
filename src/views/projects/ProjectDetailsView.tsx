@@ -38,9 +38,9 @@ const ProjectDetailsView = () => {
           </button>
         </nav>
         <TaskList tasks={data.tasks}/>
-        <AddTaskModal />
+        <AddTaskModal/>
         <EditTaskData/>
-        <TaskModalDetails />
+        <TaskModalDetails/>
       </div>
     );
 };

@@ -32,6 +32,7 @@ export default function EditTaskModal({data, taskId} : EditTaskModalProps) {
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({queryKey: ["project", projectId]}) // realizar un refresh de la consulta para actualizar datos
+            queryClient.invalidateQueries({queryKey: ["task", taskId]}) // realizar un refresh de la consulta para actualizar datos
             toast.success(data?.message)
             reset()
             navigate(location.pathname, {replace: true})
@@ -97,7 +98,7 @@ export default function EditTaskModal({data, taskId} : EditTaskModalProps) {
                                     <input
                                         type="submit"
                                         className=" bg-fuchsia-600 hover:bg-fuchsia-700 w-full p-3  text-white font-black  text-xl cursor-pointer"
-                                        value='Guardar Tarea'
+                                        value='Guardar Cambios'
                                     />
                                 </form>
                             </Dialog.Panel>

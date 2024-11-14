@@ -20,7 +20,6 @@ const DashboardView = () => {
       toast.error(error.message)
     },
     onSuccess: (data) => {
-      
       toast.success(data?.message)
       queryClient.invalidateQueries({queryKey: ["projects"]})
       
