@@ -19,14 +19,9 @@ export default function ConfirmAccountView() {
         }
       })
 
-    const handleChange = (token: ConfirmToken["token"]) => {
-        setToken(token)
-    }
+    const handleChange = (token: ConfirmToken["token"]) => setToken(token)
 
-    const handleCompleted = (token: ConfirmToken["token"]) => {
-        mutate({token});
-        
-    }
+    const handleCompleted = (token: ConfirmToken["token"]) =>  mutate({token})
   return (
     <>
       <h1 className="text-5xl font-black text-white">Confirma tu Cuenta</h1>
