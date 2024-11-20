@@ -24,9 +24,9 @@ export const createTask = async({formData, projectId} : Pick<TaskAPI, 'formData'
 export const getTaskById = async({projectId, taskId} : Pick<TaskAPI, 'projectId' | 'taskId'>) => {
     try {
         const url = `/projects/${projectId}/tasks/${taskId}`
-        const { data } = await api.get<Task>(url)
-        const response = taskChema.safeParse(data)
+        const { data } = await api.get(url)
         
+        const response = taskChema.safeParse(data)
         if (response.success) return response.data
         
         

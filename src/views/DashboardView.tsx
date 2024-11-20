@@ -5,14 +5,20 @@ import { Menu, Transition } from '@headlessui/react'
 import { EllipsisVerticalIcon } from '@heroicons/react/20/solid'
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useAuth } from "@/hooks/useAuth";
 
 const DashboardView = () => {
 
   const queryClient = useQueryClient()
-  const { data, isLoading } = useQuery({
+
+  const { data: user, isLoading: authLoading } = useAuth()
+ 
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["projects"],
     queryFn: getProjects,
   });
+  
+  console.log(isError);
   
   const { mutate } = useMutation({
     mutationFn: deleteProjectById,
@@ -22,13 +28,12 @@ const DashboardView = () => {
     onSuccess: (data) => {
       toast.success(data?.message)
       queryClient.invalidateQueries({queryKey: ["projects"]})
-      
     }
   })
 
-  if (isLoading) return "Cargando...";
+  if (isLoading && authLoading) return "Cargando...";
 
-  if (data) return (
+  if (data && user) return (
     <div>
       <h1 className="text-5xl font-black">Mis Proyectos</h1>
       <p className="text-2xl font-light text-gray-500 mt-5">
@@ -55,6 +60,12 @@ const DashboardView = () => {
             >
               <div className="flex min-w-0 gap-x-4">
                 <div className="min-w-0 flex-auto space-y-2">
+                  <div className="mb-2">
+                    {project.manager === user._id ? 
+                      <p className="font-bold text-xs uppercase bg-indigo-50 text-indigo-500 border-2 border-indigo-500 rounded-lg inline-block py-1 px-5">Manager</p> : 
+                      <p className="font-bold text-xs uppercase bg-green-50 text-green-500 border-2 border-green-500 rounded-lg inline-block py-1 px-5">Colaborador</p>}
+
+                  </div>
                   <Link
                     to={`/projects/${project._id}`}
                     className="text-gray-600 cursor-pointer hover:underline text-3xl font-bold"
@@ -94,27 +105,31 @@ const DashboardView = () => {
                           Ver Proyecto
                         </Link>
                       </Menu.Item>
-                      <Menu.Item>
-                        <Link
-                          to={`/projects/${project._id}/edit`}
-                          className="block px-3 py-1 text-sm leading-6 text-gray-900"
-                        >
-                          Editar Proyecto
-                        </Link>
-                      </Menu.Item>
-                      <Menu.Item>
-                        <button
-                          type="button"
-                          className="block px-3 py-1 text-sm leading-6 text-red-500"
-                          onClick={() => { 
-                              const confirmation = confirm("Seguro eliminar proyecto ?")
-                              if(confirmation)  mutate(project._id)
-                            }
-                          }
-                        >
-                          Eliminar Proyecto
-                        </button>
-                      </Menu.Item>
+                      {project.manager === user._id && (
+                        <>
+                          <Menu.Item>
+                            <Link
+                              to={`/projects/${project._id}/edit`}
+                              className="block px-3 py-1 text-sm leading-6 text-gray-900"
+                            >
+                              Editar Proyecto
+                            </Link>
+                          </Menu.Item>
+                          <Menu.Item>
+                            <button
+                              type="button"
+                              className="block px-3 py-1 text-sm leading-6 text-red-500"
+                              onClick={() => { 
+                                  const confirmation = confirm("Seguro eliminar proyecto ?")
+                                  if(confirmation)  mutate(project._id)
+                                }
+                              }
+                            >
+                              Eliminar Proyecto
+                            </button>
+                          </Menu.Item>
+                        </>
+                      )}
                     </Menu.Items>
                   </Transition>
                 </Menu>

@@ -3,5 +3,5 @@ export const statusTranslations:{ [key: string] : string  } = {
     Espera: "En Espera",
     Progreso: "En Progreso",
     Revision: "En Revision",
-    Completada: "Completadas",
+    Completada: "Completada",
   };
