@@ -24,7 +24,6 @@ const ProjectDetailsView = () => {
   });
 
   const canEditAndDelete = useMemo(() => data?.manager === user._id, [data, user])
-  console.log(isError);
   
   if (isLoading && authLoading) return "Loading...";
   if (isError) return <Navigate to="/404" />;

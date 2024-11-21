@@ -25,8 +25,8 @@ export const getTaskById = async({projectId, taskId} : Pick<TaskAPI, 'projectId'
     try {
         const url = `/projects/${projectId}/tasks/${taskId}`
         const { data } = await api.get(url)
-        
         const response = taskChema.safeParse(data)
+        
         if (response.success) return response.data
         
         
@@ -63,7 +63,6 @@ export const deleteTaskById = async({projectId, taskId} : Pick<TaskAPI, 'project
     }
 }
 
-//http://localhost:4000/api/projects/672c18703fa9002ec520f07f/tasks/672c372250d772b99f232051/status
 export const updateStatusTaskById = async({projectId, taskId, status} : Pick<TaskAPI, 'projectId' | 'taskId' | 'status'>) => {
     try {
         const url = `/projects/${projectId}/tasks/${taskId}/status`
