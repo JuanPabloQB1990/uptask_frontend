@@ -9,9 +9,7 @@ const AppLayout = () => {
   const { data, isLoading, isError } = useAuth();
 
   if (isLoading) return "Loading...";
-  if (isError) {
-    return <Navigate to="/auth/login" />;
-  }
+  if (isError) return <Navigate to="/auth/login" />;
 
   if (data)
     return (

@@ -1,5 +1,6 @@
 import { deleteTaskById } from "@/api/TaskApi";
-import { Task } from "@/types/index";
+import { TaskProject } from "@/types/index";
+import { useDraggable } from "@dnd-kit/core";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,38 +9,58 @@ import { toast } from "react-toastify";
 import { Fragment } from "react/jsx-runtime";
 
 type TaskCardProps = {
-  task: Task;
+  task: TaskProject;
   canEditAndDelete: boolean;
 };
 
 const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
-  const navigate = useNavigate()
 
-  const params = useParams()
-  const projectId = params.projectId!
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: task._id,
+  });
+  
+  const navigate = useNavigate();
 
-  const queryClient = useQueryClient()
-    const { mutate } = useMutation({
-        mutationFn: deleteTaskById,
-        onError: (error) => {
-            toast.error(error.message)
-        },
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({queryKey : ["project", projectId]}) // realizar un refresh de la consulta para actualizar datos
-            toast.success(data?.message)
-        }
-    })
+  const params = useParams();
+  const projectId = params.projectId!;
+
+  const queryClient = useQueryClient();
+
+  const { mutate } = useMutation({
+    mutationFn: deleteTaskById,
+    onError: (error) => {
+      toast.error(error.message);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] }); // realizar un refresh de la consulta para actualizar datos
+      toast.success(data?.message);
+    },
+  });
+
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        padding: "1.25rem",
+        backgroundColor: "#fff",
+        width: "300px",
+        display: "flex",
+        borderWidth: "1px",
+        borderColor: "rgb(203 213 225 / var(--tw-border-opacity))",
+      }
+    : undefined;
 
   return (
     <li className="p-5 bg-white border border-slate-300 flex justify-between gap-3">
-      <div className="min-w-0 flex flex-col gap-y-4">
-        <button
-          type="button"
-          className="text-xl font-bold text-slate-600 text-left"
-          onClick={() => navigate(location.pathname + `?viewTask=${task._id}`)}
-        >
+      <div
+        {...listeners}
+        {...attributes}
+        ref={setNodeRef}
+        style={style}
+        className="min-w-0 flex flex-col gap-y-4"
+      >
+        <p className="text-xl font-bold text-slate-600 text-left">
           {task.name}
-        </button>
+        </p>
         <p className="text-slate-500">{task.description}</p>
       </div>
       <div className="flex shrink-0  gap-x-6">
@@ -62,7 +83,9 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
                 <button
                   type="button"
                   className="block px-3 py-1 text-sm leading-6 text-gray-900"
-                  onClick={() => navigate(location.pathname + `?viewTask=${task._id}`)}
+                  onClick={() =>
+                    navigate(location.pathname + `?viewTask=${task._id}`)
+                  }
                 >
                   Ver Tarea
                 </button>
@@ -73,7 +96,9 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
                     <button
                       type="button"
                       className="block px-3 py-1 text-sm leading-6 text-gray-900"
-                      onClick={() => navigate(location.pathname + `?editTask=${task._id}`)}
+                      onClick={() =>
+                        navigate(location.pathname + `?editTask=${task._id}`)
+                      }
                     >
                       Editar Tarea
                     </button>
@@ -83,7 +108,7 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
                     <button
                       type="button"
                       className="block px-3 py-1 text-sm leading-6 text-red-500"
-                      onClick={() => mutate({projectId, taskId: task._id})}
+                      onClick={() => mutate({ projectId, taskId: task._id })}
                     >
                       Eliminar Tarea
                     </button>

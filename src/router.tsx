@@ -12,9 +12,17 @@ import RequestNewCodeView from "./views/auth/RequestNewCodeView";
 import ForgotPasswordView from "./views/auth/ForgotPasswordView";
 import NewPasswordView from "./views/auth/NewPasswordView";
 import ProjectTeamView from "./views/projects/ProjectTeamView";
+import ProfileView from "./views/profile/ProfileView";
+import ChangePasswordView from "./views/profile/ChangePasswordView";
+import ProfileLayout from "./layouts/ProfileLayout";
 export default function Router() {
     return (
-        <BrowserRouter>
+        <BrowserRouter 
+            future={{
+                v7_relativeSplatPath: true,
+                v7_startTransition: true
+            }}
+        >
             <Routes>
                 <Route element={<AppLayout />}>
                     <Route path="/" element={<DashboardView/>} index/>
@@ -22,6 +30,11 @@ export default function Router() {
                     <Route path="/projects/:projectId" element={<ProjectDetailsView/>} index/>
                     <Route path="/projects/:projectId/edit" element={<EditProjectView/>} index/>
                     <Route path="/projects/:projectId/team" element={<ProjectTeamView/>} index/>
+                    
+                    <Route element={<ProfileLayout />}>  
+                        <Route path="/profile" element={<ProfileView/>} index/>
+                        <Route path="/profile/password" element={<ChangePasswordView/>} index/>
+                    </Route>
                 </Route>
                 <Route element={<AuthLayout/>}>
                     <Route path="/auth/login" element={<LoginView />} index/>

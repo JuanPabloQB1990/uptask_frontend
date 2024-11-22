@@ -15,10 +15,12 @@ import { TaskStatus } from "@/types/index";
 import NotesPanel from "../notes/NotesPanel";
 
 export default function TaskModalDetails() {
+
   const params = useParams();
   const projectId = params.projectId!;
 
   const navigate = useNavigate();
+
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const taskId = queryParams.get("viewTask")!;
@@ -45,7 +47,7 @@ export default function TaskModalDetails() {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    console.log(e.target.value);
+    
     const status = e.target.value as TaskStatus;
     const data = {
       projectId,
