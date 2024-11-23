@@ -14,7 +14,7 @@ const ProjectTeamView = () => {
     const projectId = params.projectId!
 
     
-    const { data, isLoading, isError} = useQuery({
+    const { data, isLoading, isError, error} = useQuery({
         queryKey: ["projectTeam", projectId],
         queryFn: () => getMembersProjectTeam(projectId),
         refetchOnWindowFocus: false,
@@ -22,6 +22,7 @@ const ProjectTeamView = () => {
     })
     
     const queryClient = useQueryClient()
+    
     const { mutate } = useMutation({
         mutationFn: deleteMemberProjectTeamById,
         onError: (error) => {
@@ -33,7 +34,7 @@ const ProjectTeamView = () => {
 
         }
     })
-    
+    if (error?.message === "Token no Valido") return <Navigate to="/auth/login" />;
     if (isLoading) return <p>Cargando...</p>
     if (isError) return <Navigate to="/404"/>
 

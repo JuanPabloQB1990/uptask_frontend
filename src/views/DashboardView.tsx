@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Fragment } from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { EllipsisVerticalIcon } from '@heroicons/react/20/solid'
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import DeleteProjectModal from "@/components/projects/DeleteProjectModal";
 
@@ -13,13 +13,13 @@ const DashboardView = () => {
 
   const { data: user, isLoading: authLoading } = useAuth()
   
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["projects"],
     queryFn: getProjects,
   });
 
   if (isLoading && authLoading) return "Cargando...";
-
+  if (error?.message === "Token no Valido") return <Navigate to="/auth/login" />;
   if (data && user) return (
     <div>
       <h1 className="text-5xl font-black">Mis Proyectos</h1>

@@ -33,10 +33,7 @@ export const getProjectById = async(id : Project["_id"]) => {
     try {
         const { data } = await api(`/projects/${id}`)
         const response = EditProjectSchema.safeParse(data)
-        if (response.success) {
-            return response.data;
-            
-        }
+        if (response.success) return response.data;
         
     } catch (error) {
         if (isAxiosError(error) && error.response) {
@@ -50,9 +47,9 @@ export const getFullProjectById = async(id : Project["_id"]) => {
     try {
         const { data } = await api(`/projects/${id}`)
         const response = projectSchema.safeParse(data)
+  
         if (response.success) {
             return response.data;
-            
         }
         
     } catch (error) {

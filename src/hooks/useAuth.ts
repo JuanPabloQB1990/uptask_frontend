@@ -2,7 +2,7 @@ import { getUser } from "@/api/AuthApi"
 import { useQuery } from "@tanstack/react-query"
 
 export const useAuth = () => {
-    const { data, isError, isLoading } = useQuery({
+    const { data, isError, isLoading, error } = useQuery({
         queryKey: ["profile"],
         queryFn: getUser,
         retry: 1,
@@ -13,5 +13,6 @@ export const useAuth = () => {
         data,
         isError,
         isLoading,
+        error
     }
 }

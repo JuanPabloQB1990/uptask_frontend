@@ -17,16 +17,17 @@ const ProjectDetailsView = () => {
 
   const { data: user, isLoading: authLoading } = useAuth()
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["project", projectId],
     queryFn: () => getFullProjectById(projectId),
     retry: false,
   });
-
+  
   const canEditAndDelete = useMemo(() => data?.manager === user._id, [data, user])
   
+  if (error?.message === "Token no Valido") return <Navigate to="/auth/login" />;
+  if(isError) return <Navigate to="/404"/>
   if (isLoading && authLoading) return "Loading...";
-  if (isError) return <Navigate to="/404" />;
   if (data && user)
     return (
       <div>
