@@ -10,7 +10,6 @@ const AuthLayout = () => {
                 <Logo />
                 <div className="mt-10">
                     <Outlet />
-
                 </div>
             </div>
         </div>
