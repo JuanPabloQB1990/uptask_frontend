@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import {
   Navigate,
@@ -13,8 +13,11 @@ import { formatDate } from "@/utils/utils";
 import { statusTranslations } from "@/locales/es";
 import { TaskStatus } from "@/types/index";
 import NotesPanel from "../notes/NotesPanel";
+import io from "socket.io-client";
 
 export default function TaskModalDetails() {
+
+  const [socket, setSocket] = useState(io(import.meta.env.VITE_API_URL_SOCKET));
 
   const params = useParams();
   const projectId = params.projectId!;
@@ -31,6 +34,24 @@ export default function TaskModalDetails() {
     queryFn: () => getTaskById({ projectId, taskId }),
     enabled: !!taskId, // habilitar la funcion GetTaskById if existe el id en la url
     retry: false,
+  });
+
+  useEffect(() => {
+    socket.emit("open task", taskId);
+  }, []);
+
+  useEffect(() => {
+    socket.on("added note", (task) => {
+      if (task === data?._id) {
+        queryClient.invalidateQueries({queryKey: ["task", taskId]})
+      }
+    });
+
+    socket.on("deleted note", (task) => {
+      if (task === data?._id) {
+        queryClient.invalidateQueries({queryKey: ["task", taskId]})
+      }
+    });
   });
 
   const queryClient = useQueryClient();

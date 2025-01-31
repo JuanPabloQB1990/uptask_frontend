@@ -1,26 +1,30 @@
 import { deleteMemberProjectTeamById, getMembersProjectTeam } from '@/api/TeamApi'
 import AddMemberModal from '@/components/team/AddMemberModal'
+import { Project, User } from '@/types/index'
 import { Menu, Transition } from '@headlessui/react'
 import { EllipsisVerticalIcon } from '@heroicons/react/20/solid'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import io from "socket.io-client";
 
 const ProjectTeamView = () => {
+
+    const [socket, setSocket] = useState(io(import.meta.env.VITE_API_URL_SOCKET));
+    const [userId, setUserId] = useState("");
 
     const navigate = useNavigate()
     const params = useParams()
     const projectId = params.projectId!
 
-    
     const { data, isLoading, isError, error} = useQuery({
         queryKey: ["projectTeam", projectId],
         queryFn: () => getMembersProjectTeam(projectId),
         refetchOnWindowFocus: false,
         retry: true
     })
-    
+
     const queryClient = useQueryClient()
     
     const { mutate } = useMutation({
@@ -32,8 +36,17 @@ const ProjectTeamView = () => {
             toast.success(data?.message)
             queryClient.invalidateQueries({queryKey: ["projectTeam", projectId]})
 
+            // emitir a socket.io backend
+            socket.emit("delete member", userId)
+            setUserId("")
         }
     })
+
+    const handleDeleteMember = (projectId: Project["_id"], userId: User["_id"]) => {
+        mutate({projectId, userId})
+        setUserId(userId)
+    }
+    
     if (error?.message === "Token no Valido") return <Navigate to="/auth/login" />;
     if (isLoading) return <p>Cargando...</p>
     if (isError) return <Navigate to="/404"/>
@@ -92,7 +105,7 @@ const ProjectTeamView = () => {
                                         <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
                                             <Menu.Item>
                                                 <button
-                                                    onClick={() => mutate({projectId, userId : member._id})}
+                                                    onClick={() => handleDeleteMember(projectId, member._id)}
                                                     type='button'
                                                     className='block px-3 py-1 text-sm leading-6 text-red-500'
                                                 >

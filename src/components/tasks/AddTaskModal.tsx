@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import TaskForm from './TaskForm';
@@ -7,11 +7,14 @@ import { TaskFormData } from '@/types/index';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createTask } from '@/api/TaskApi';
 import { toast } from 'react-toastify';
+import io from "socket.io-client";
 
 export default function AddTaskModal() {
 
     const navigate = useNavigate()
     const location = useLocation()
+
+    const [socket, setSocket] = useState(io(import.meta.env.VITE_API_URL_SOCKET));
     
     /** leer si la url tiene el newTask=true para abrir el modal */
     const queryParams = new URLSearchParams(location.search)
@@ -29,6 +32,7 @@ export default function AddTaskModal() {
     const { register, handleSubmit, reset, formState: {errors} } = useForm({defaultValues : initialValues})
 
     const queryClient = useQueryClient()
+
     const { mutate } = useMutation({
         mutationFn: createTask,
         onError: (error) => {
@@ -39,6 +43,9 @@ export default function AddTaskModal() {
             toast.success(data?.message)
             reset()
             navigate(location.pathname, {replace: true})
+            
+            // emitir a socket.io backend
+            socket.emit("new task", {...data?.taskResponse, project: projectId})
 
         }
     })

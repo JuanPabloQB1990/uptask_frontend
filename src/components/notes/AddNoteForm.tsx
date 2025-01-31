@@ -5,6 +5,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createNote } from "@/api/NoteApi";
 import { toast } from "react-toastify";
 import { useLocation, useParams } from "react-router-dom";
+import { useState } from "react";
+import io from "socket.io-client";
 
 const AddNoteForm = () => {
 
@@ -16,6 +18,8 @@ const AddNoteForm = () => {
     const taskId = queryParams.get("viewTask")!
     
     const queryClient = useQueryClient()
+
+    const [socket, setSocket] = useState(io(import.meta.env.VITE_API_URL_SOCKET));
     
     const initialValues: NoteFormDate = {
         content: "",
@@ -37,6 +41,9 @@ const {  mutate } = useMutation({
         toast.success(data?.message)
         reset()
         queryClient.invalidateQueries({queryKey: ["task", taskId]})
+
+        // emitir a socket.io backend
+        socket.emit("new note", taskId)
     }
 })
 

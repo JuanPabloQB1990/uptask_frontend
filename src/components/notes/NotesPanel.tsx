@@ -2,7 +2,6 @@ import { Task } from '@/types/index'
 import AddNoteForm from './AddNoteForm'
 import NoteDetails from './NoteDetails'
 
-
 type NotesPanelProps = {
     notes: Task["notes"]
 }

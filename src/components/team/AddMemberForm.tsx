@@ -35,13 +35,11 @@ export default function AddMemberForm() {
 
     return (
         <>
-
             <form
                 className="mt-10 space-y-5"
                 onSubmit={handleSubmit(handleSearchUser)}
                 noValidate
             >
-
                 <div className="flex flex-col gap-3">
                     <label
                         className="font-normal text-2xl"
@@ -64,7 +62,6 @@ export default function AddMemberForm() {
                         <ErrorMessage>{errors.email.message}</ErrorMessage>
                     )}
                 </div>
-
                 <input
                     type="submit"
                     className=" bg-fuchsia-600 hover:bg-fuchsia-700 w-full p-3  text-white font-black  text-xl cursor-pointer"

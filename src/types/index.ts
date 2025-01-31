@@ -82,7 +82,7 @@ export const projectSchema = z.object({
     description: z.string(),
     manager: z.string(userSchema.pick({_id:true})),
     tasks: z.array(taskProjectSchema),
-    team: z.array(z.string(userSchema.pick({_id:true})))
+    team: z.array(z.object({_id: z.string()}))
 })
 
 export const dashboardProjectSchema = z.array(
@@ -91,6 +91,7 @@ export const dashboardProjectSchema = z.array(
         projectName: true,
         clientName: true,
         description: true,
+        team: true,
         manager: true
     })
 )
@@ -105,6 +106,7 @@ export const EditProjectSchema = projectSchema.pick({
 
 /** Response type */
 export type ResponseQuery = {
+    taskResponse: TaskProject
     message: string
 }
 

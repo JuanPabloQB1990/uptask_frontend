@@ -1,22 +1,50 @@
 import { getProjects } from "@/api/ProjectApi";
-import { useQuery } from "@tanstack/react-query";
-import { Fragment } from 'react'
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Fragment, useEffect, useState } from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { EllipsisVerticalIcon } from '@heroicons/react/20/solid'
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import DeleteProjectModal from "@/components/projects/DeleteProjectModal";
+import io from "socket.io-client";
 
 const DashboardView = () => {
 
   const navigate = useNavigate()
 
   const { data: user, isLoading: authLoading } = useAuth()
+
+  const [socket, setSocket] = useState(io(import.meta.env.VITE_API_URL_SOCKET));
+
+  const queryClient = useQueryClient()
   
   const { data, isLoading, error } = useQuery({
     queryKey: ["projects"],
     queryFn: getProjects,
   });
+
+  useEffect(() => {
+    socket.emit("open projects", user._id);
+  }, []);
+
+  useEffect(() => {
+    socket.on("added member", (userId) => {
+      if (user._id === userId) {
+        queryClient.invalidateQueries({queryKey: ["projects"]})
+        
+      }
+  })
+
+  socket.on("deleted member", (userId) => {
+    if (user._id === userId) {
+      queryClient.invalidateQueries({queryKey: ["projects"]})
+      navigate("/")
+    }
+  })
+
+
+    
+  })
 
   if (isLoading && authLoading) return "Cargando...";
   if (error?.message === "Token no Valido") return <Navigate to="/auth/login" />;
@@ -51,7 +79,6 @@ const DashboardView = () => {
                     {project.manager === user._id ? 
                       <p className="font-bold text-xs uppercase bg-indigo-50 text-indigo-500 border-2 border-indigo-500 rounded-lg inline-block py-1 px-5">Manager</p> : 
                       <p className="font-bold text-xs uppercase bg-green-50 text-green-500 border-2 border-green-500 rounded-lg inline-block py-1 px-5">Colaborador</p>}
-
                   </div>
                   <Link
                     to={`/projects/${project._id}`}

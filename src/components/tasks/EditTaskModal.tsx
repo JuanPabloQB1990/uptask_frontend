@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Task, TaskFormData } from '@/types/index';
@@ -7,21 +7,24 @@ import TaskForm from './TaskForm';
 import { toast } from 'react-toastify';
 import { updateTaskById } from '@/api/TaskApi';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import io from "socket.io-client";
 
 type EditTaskModalProps = {
-    data: Task
+    task: Task
     taskId: Task["_id"]
 }
 
-export default function EditTaskModal({data, taskId} : EditTaskModalProps) {
+export default function EditTaskModal({task, taskId} : EditTaskModalProps) {
     const navigate = useNavigate()
 
     const params = useParams()
     const projectId = params.projectId!
 
+    const [socket, setSocket] = useState(io(import.meta.env.VITE_API_URL_SOCKET));
+
     const { register, handleSubmit, reset, formState: {errors} } = useForm<TaskFormData>({defaultValues : {
-        name: data.name,
-        description: data.description
+        name: task.name,
+        description: task.description
     }})
 
     const queryClient = useQueryClient()
@@ -37,6 +40,8 @@ export default function EditTaskModal({data, taskId} : EditTaskModalProps) {
             reset()
             navigate(location.pathname, {replace: true})
 
+            // emitir a socket.io backend
+            socket.emit("edit task", task)
         }
     })
 

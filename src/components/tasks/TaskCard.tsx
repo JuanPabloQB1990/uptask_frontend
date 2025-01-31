@@ -4,9 +4,11 @@ import { useDraggable } from "@dnd-kit/core";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Fragment } from "react/jsx-runtime";
+import io from "socket.io-client";
 
 type TaskCardProps = {
   task: TaskProject;
@@ -18,6 +20,8 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: task._id,
   });
+
+  const [socket, setSocket] = useState(io(import.meta.env.VITE_API_URL_SOCKET));
   
   const navigate = useNavigate();
 
@@ -34,6 +38,9 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["project", projectId] }); // realizar un refresh de la consulta para actualizar datos
       toast.success(data?.message);
+
+      // emitir a socket.io backend
+      socket.emit("delete task", {...task, project: projectId})
     },
   });
 

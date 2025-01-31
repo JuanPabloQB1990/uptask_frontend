@@ -5,9 +5,10 @@ import TaskList from "@/components/tasks/TaskList";
 import TaskModalDetails from "@/components/tasks/TaskModalDetails";
 import { useAuth } from "@/hooks/useAuth";
 import { isManager } from "@/utils/policies";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import io from "socket.io-client";
 
 const ProjectDetailsView = () => {
   const navigate = useNavigate();
@@ -16,13 +17,41 @@ const ProjectDetailsView = () => {
   const projectId = params.projectId!;
 
   const { data: user, isLoading: authLoading } = useAuth()
-
+  const queryClient = useQueryClient()
+  const [socket, setSocket] = useState(io(import.meta.env.VITE_API_URL_SOCKET));
+  
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["project", projectId],
     queryFn: () => getFullProjectById(projectId),
     retry: false,
   });
-  
+
+  useEffect(() => {
+    socket.emit("open project", projectId);
+  }, []);
+
+  useEffect(() => {
+    socket.on("added task", (taskNew) => {
+      if (taskNew.project === data?._id) {
+        queryClient.invalidateQueries({queryKey: ["project", projectId]})
+      }
+    });
+
+    socket.on("deleted task", (taskNew) => {
+      if (taskNew.project === data?._id) {
+        queryClient.invalidateQueries({queryKey: ["project", projectId]})
+      }
+    });
+
+    socket.on("edited task", (taskNew) => {
+      if (taskNew.project === data?._id) {
+        queryClient.invalidateQueries({queryKey: ["project", projectId]})
+      }
+    });
+
+    
+  });
+ 
   const canEditAndDelete = useMemo(() => data?.manager === user._id, [data, user])
   
   if (error?.message === "Token no Valido") return <Navigate to="/auth/login" />;

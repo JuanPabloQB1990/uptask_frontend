@@ -1,8 +1,10 @@
 import { addMemberToProject } from "@/api/TeamApi"
 import { TeamMember } from "@/types/index"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { toast } from "react-toastify"
+import io from "socket.io-client";
 
 type SearchResultProps = {
     user: TeamMember
@@ -11,6 +13,7 @@ type SearchResultProps = {
 
 const SearchResult = ({ user, reset } : SearchResultProps) => {
     
+    const [socket, setSocket] = useState(io(import.meta.env.VITE_API_URL_SOCKET));
     
     const params = useParams()
     const projectId = params.projectId!
@@ -27,6 +30,9 @@ const SearchResult = ({ user, reset } : SearchResultProps) => {
             reset()
             navigate(location.pathname, {replace: true})
             queryClient.invalidateQueries({queryKey: ["projectTeam", projectId]})
+
+            // emitir a socket.io backend
+            socket.emit("new member", user._id)
         },
     })
 

@@ -3,15 +3,18 @@ import { useAuth } from "@/hooks/useAuth";
 import { Note } from "@/types/index"
 import { formatDate } from "@/utils/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import io from "socket.io-client";
 
 type NoteDetailsProps = {
     note: Note
 }
 
 const NoteDetails = ({note} : NoteDetailsProps) => {
+
+    const [socket, setSocket] = useState(io(import.meta.env.VITE_API_URL_SOCKET));
 
     const params = useParams()
     const projectId = params.projectId!
@@ -31,6 +34,9 @@ const NoteDetails = ({note} : NoteDetailsProps) => {
         onSuccess: (data) => {
             toast.success(data?.message)
             queryClient.invalidateQueries({queryKey: ["task", taskId]})
+
+            // emitir a socket.io backend
+            socket.emit("delete note", taskId)
         }
     })
 
