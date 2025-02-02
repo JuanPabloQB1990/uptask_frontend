@@ -49,6 +49,14 @@ const ProjectDetailsView = () => {
       }
     });
 
+    socket.on("updated status task", (taskNew) => {
+      console.log(taskNew);
+      
+      if (taskNew.project === data?._id) {
+        queryClient.invalidateQueries({queryKey: ["project", projectId]})
+      }
+    });
+
     
   });
  

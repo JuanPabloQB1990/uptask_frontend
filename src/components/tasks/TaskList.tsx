@@ -7,6 +7,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateStatusTaskById } from "@/api/TaskApi";
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
+import { useState } from "react";
+import io from "socket.io-client";
 
 type TaskListProps = {
   tasks: TaskProject[];
@@ -34,12 +36,15 @@ const statusStyles: { [key: string]: string } = {
 };
 
 const TaskList = ({ tasks, canEditAndDelete }: TaskListProps) => {
+
   const groupedTasks = tasks.reduce((acc, task) => {
     let currentGroup = acc[task.status] ? [...acc[task.status]] : [];
 
     currentGroup = [...currentGroup, task];
     return { ...acc, [task.status]: currentGroup };
   }, initialStatusGroups);
+
+  const [socket, setSocket] = useState(io(import.meta.env.VITE_API_URL_SOCKET));
 
   const params = useParams();
   const projectId = params.projectId!;
@@ -54,6 +59,9 @@ const TaskList = ({ tasks, canEditAndDelete }: TaskListProps) => {
     onSuccess: (data) => {
       toast.success(data?.message);
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+
+      // emitir a socket.io backend
+      socket.emit("update status task", {...data?.taskResponse, project: projectId})
     },
   });
 
@@ -82,6 +90,7 @@ const TaskList = ({ tasks, canEditAndDelete }: TaskListProps) => {
           tasks: updateTasks,
         };
       });
+      
     }
   };
 
