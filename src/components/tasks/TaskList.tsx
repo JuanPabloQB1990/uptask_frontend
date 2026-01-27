@@ -7,8 +7,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateStatusTaskById } from "@/api/TaskApi";
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
-import { useState } from "react";
-import io from "socket.io-client";
+import { useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 
 type TaskListProps = {
   tasks: TaskProject[];
@@ -27,90 +27,115 @@ const initialStatusGroups: GroupedTasks = {
   Completada: [],
 };
 
-const statusStyles: { [key: string]: string } = {
+const statusStyles: Record<string, string> = {
   Pendiente: "border-t-slate-300",
   Espera: "border-t-blue-300",
   Progreso: "border-t-red-300",
   Revision: "border-t-amber-300",
-  Completada: "border-t-emeral-300",
+  Completada: "border-t-emerald-300",
 };
 
 const TaskList = ({ tasks, canEditAndDelete }: TaskListProps) => {
-
-  const groupedTasks = tasks.reduce((acc, task) => {
-    let currentGroup = acc[task.status] ? [...acc[task.status]] : [];
-
-    currentGroup = [...currentGroup, task];
-    return { ...acc, [task.status]: currentGroup };
-  }, initialStatusGroups);
-
-  const [socket, setSocket] = useState(io(import.meta.env.VITE_API_URL_SOCKET));
-
+  /* -------------------- ROUTER -------------------- */
   const params = useParams();
   const projectId = params.projectId!;
 
+  /* -------------------- SOCKET -------------------- */
+  const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET);
+
+    return () => {
+      socketRef.current?.disconnect();
+    };
+  }, []);
+
+  /* -------------------- GROUP TASKS -------------------- */
+  const groupedTasks = tasks.reduce<GroupedTasks>((acc, task) => {
+    acc[task.status] = acc[task.status] || [];
+    acc[task.status].push(task);
+    return acc;
+  }, structuredClone(initialStatusGroups));
+
+  /* -------------------- MUTATION -------------------- */
   const queryClient = useQueryClient();
 
   const { mutate } = useMutation({
     mutationFn: updateStatusTaskById,
-    onError: (error) => {
+    onError: (error: Error) => {
       toast.error(error.message);
     },
     onSuccess: (data) => {
       toast.success(data?.message);
-      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
 
-      // emitir a socket.io backend
-      socket.emit("update status task", {...data?.taskResponse, project: projectId})
+      queryClient.invalidateQueries({
+        queryKey: ["project", projectId],
+      });
+
+      // emitir evento socket
+      socketRef.current?.emit("update status task", {
+        ...data?.taskResponse,
+        project: projectId,
+      });
     },
   });
 
+  /* -------------------- DND HANDLER -------------------- */
   const handleDragEnd = (e: DragEndEvent) => {
     const { over, active } = e;
+    if (!over) return;
 
-    if (over && over.id) {
-      const data = {
-        projectId,
-        taskId: active.id.toString(),
-        status: over.id as TaskStatus,
-      };
+    const newStatus = over.id as TaskStatus;
 
-      mutate(data);
+    mutate({
+      projectId,
+      taskId: active.id.toString(),
+      status: newStatus,
+    });
 
-      queryClient.setQueryData(["project", projectId], (prevData: Project) => {
-        const updateTasks = prevData.tasks.map((task) => {
-          if (task._id === active.id) {
-            return { ...task, status: over.id as TaskStatus };
-          }
-          return task;
-        });
+    // Optimistic update
+    queryClient.setQueryData(
+      ["project", projectId],
+      (prevData: Project | undefined) => {
+        if (!prevData) return prevData;
 
         return {
           ...prevData,
-          tasks: updateTasks,
+          tasks: prevData.tasks.map((task) =>
+            task._id === active.id
+              ? { ...task, status: newStatus }
+              : task
+          ),
         };
-      });
-      
-    }
+      }
+    );
   };
 
+  /* -------------------- UI -------------------- */
   return (
     <div>
       <h2 className="text-5xl font-black my-10">Tareas</h2>
+
       <div className="flex gap-5 overflow-x-scroll 2xl:overflow-auto pb-32">
         <DndContext onDragEnd={handleDragEnd}>
           {Object.entries(groupedTasks).map(([status, tasks]) => (
-            <div key={status} className="min-w-[300px] 2xl:min-w-0 2xl:w-1/5">
+            <div
+              key={status}
+              className="min-w-[300px] 2xl:min-w-0 2xl:w-1/5"
+            >
               <h3
-                className={`text-center capitalize text-xl font-light border border-slate-300 bg-white p-3 border-t-8 ${statusStyles[status]}`}
+                className={`text-center text-xl font-light border bg-white p-3 border-t-8 ${statusStyles[status]}`}
               >
                 {statusTranslations[status]}
               </h3>
+
               <DropTask status={status} />
+
               <ul className="mt-5 space-y-5">
                 {tasks.length === 0 ? (
                   <li className="text-gray-500 text-center pt-3">
-                    No Hay tareas
+                    No hay tareas
                   </li>
                 ) : (
                   tasks.map((task) => (

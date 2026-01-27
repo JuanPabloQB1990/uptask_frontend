@@ -4,11 +4,11 @@ import { useDraggable } from "@dnd-kit/core";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Fragment } from "react/jsx-runtime";
-import io from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 
 type TaskCardProps = {
   task: TaskProject;
@@ -16,34 +16,51 @@ type TaskCardProps = {
 };
 
 const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
-
+  /* -------------------- DRAG -------------------- */
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: task._id,
   });
 
-  const [socket, setSocket] = useState(io(import.meta.env.VITE_API_URL_SOCKET));
-  
-  const navigate = useNavigate();
+  /* -------------------- SOCKET -------------------- */
+  const socketRef = useRef<Socket | null>(null);
 
+  useEffect(() => {
+    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET);
+
+    return () => {
+      socketRef.current?.disconnect();
+    };
+  }, []);
+
+  /* -------------------- ROUTER -------------------- */
+  const navigate = useNavigate();
   const params = useParams();
   const projectId = params.projectId!;
 
+  /* -------------------- MUTATION -------------------- */
   const queryClient = useQueryClient();
 
   const { mutate } = useMutation({
     mutationFn: deleteTaskById,
-    onError: (error) => {
+    onError: (error: Error) => {
       toast.error(error.message);
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["project", projectId] }); // realizar un refresh de la consulta para actualizar datos
       toast.success(data?.message);
 
-      // emitir a socket.io backend
-      socket.emit("delete task", {...task, project: projectId})
+      queryClient.invalidateQueries({
+        queryKey: ["project", projectId],
+      });
+
+      // emitir evento socket
+      socketRef.current?.emit("delete task", {
+        ...task,
+        project: projectId,
+      });
     },
   });
 
+  /* -------------------- STYLE DRAG -------------------- */
   const style = transform
     ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
@@ -56,6 +73,7 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
       }
     : undefined;
 
+  /* -------------------- UI -------------------- */
   return (
     <li className="p-5 bg-white border border-slate-300 flex justify-between gap-3">
       <div
@@ -70,12 +88,14 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
         </p>
         <p className="text-slate-500">{task.description}</p>
       </div>
-      <div className="flex shrink-0  gap-x-6">
+
+      <div className="flex shrink-0 gap-x-6">
         <Menu as="div" className="relative flex-none">
           <Menu.Button className="-m-2.5 block p-2.5 text-gray-500 hover:text-gray-900">
             <span className="sr-only">opciones</span>
             <EllipsisVerticalIcon className="h-9 w-9" aria-hidden="true" />
           </Menu.Button>
+
           <Transition
             as={Fragment}
             enter="transition ease-out duration-100"
@@ -97,6 +117,7 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
                   Ver Tarea
                 </button>
               </Menu.Item>
+
               {canEditAndDelete && (
                 <>
                   <Menu.Item>
@@ -115,7 +136,9 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
                     <button
                       type="button"
                       className="block px-3 py-1 text-sm leading-6 text-red-500"
-                      onClick={() => mutate({ projectId, taskId: task._id })}
+                      onClick={() =>
+                        mutate({ projectId, taskId: task._id })
+                      }
                     >
                       Eliminar Tarea
                     </button>
@@ -131,3 +154,4 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
 };
 
 export default TaskCard;
+
