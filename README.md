@@ -74,9 +74,10 @@ npm install
 4. Ajusta tus variables de entorno
 
 Ejemplo:
-
+```js
   - VITE_API_URL=http://localhost:5000
   - VITE_API_URL_SOCKET=http://localhost:5000
+```
 
 Estas variables deben coincidir con la URL donde se despliega tu backend.
 
