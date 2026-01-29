@@ -9,7 +9,6 @@ import DeleteProjectModal from "@/components/projects/DeleteProjectModal";
 import io, { Socket } from "socket.io-client";
 
 const DashboardView = () => {
-
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const socketRef = useRef<Socket | null>(null);
@@ -24,11 +23,13 @@ const DashboardView = () => {
 
   /* 🔌 Emitir cuando el usuario esté listo */
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET);
+    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
+      withCredentials: true,
+      transports: ["polling", "websocket"], // 👈 NO solo websocket
+    });
     if (!user?._id) return;
 
     socketRef.current.emit("open projects", user._id);
-
   }, [user?._id]);
 
   /* 📡 Escuchar eventos */
@@ -58,7 +59,8 @@ const DashboardView = () => {
   }, [user?._id, navigate, queryClient]);
 
   if (isLoading || authLoading) return "Cargando...";
-  if (error?.message === "Token no Valido") return <Navigate to="/auth/login" />;
+  if (error?.message === "Token no Valido")
+    return <Navigate to="/auth/login" />;
 
   if (!data || !user) return null;
 
@@ -109,9 +111,7 @@ const DashboardView = () => {
                   <p className="text-sm text-gray-400">
                     Cliente: {project.clientName}
                   </p>
-                  <p className="text-sm text-gray-400">
-                    {project.description}
-                  </p>
+                  <p className="text-sm text-gray-400">{project.description}</p>
                 </div>
               </div>
 
@@ -149,7 +149,7 @@ const DashboardView = () => {
                               onClick={() =>
                                 navigate(
                                   location.pathname +
-                                    `?deleteProject=${project._id}`
+                                    `?deleteProject=${project._id}`,
                                 )
                               }
                             >

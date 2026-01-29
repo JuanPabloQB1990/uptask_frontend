@@ -13,7 +13,6 @@ import { toast } from "react-toastify";
 import io, { Socket } from "socket.io-client";
 
 const ProjectTeamView = () => {
-  
   const socketRef = useRef<Socket | null>(null);
   const [userId, setUserId] = useState("");
 
@@ -24,7 +23,10 @@ const ProjectTeamView = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET);
+    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
+      withCredentials: true,
+      transports: ["polling", "websocket"], // 👈 NO solo websocket
+    });
 
     const handleMemberDeleted = () => {
       queryClient.invalidateQueries({ queryKey: ["projectTeam", projectId] });

@@ -41,6 +41,10 @@ export const authenticateUser = async(formData : UserLoginForm) => {
         localStorage.setItem("AUTH_TOKEN", data.token);
     } catch (error) {
         if (isAxiosError(error) && error.response) {
+            
+            if (error.status === 400) {
+                throw new Error(error.response.data.errors[0].msg);
+            }
             throw new Error(error.response.data.error);
         }
     }

@@ -14,10 +14,7 @@ type EditTaskModalProps = {
   taskId: Task["_id"];
 };
 
-export default function EditTaskModal({
-  task,
-  taskId,
-}: EditTaskModalProps) {
+export default function EditTaskModal({ task, taskId }: EditTaskModalProps) {
   /* -------------------- ROUTER -------------------- */
   const navigate = useNavigate();
   const params = useParams();
@@ -27,7 +24,10 @@ export default function EditTaskModal({
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET);
+    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
+      withCredentials: true,
+      transports: ["polling", "websocket"], // 👈 NO solo websocket
+    });
 
     return () => {
       socketRef.current?.disconnect();
@@ -87,9 +87,7 @@ export default function EditTaskModal({
       <Dialog
         as="div"
         className="relative z-10"
-        onClose={() =>
-          navigate(location.pathname, { replace: true })
-        }
+        onClose={() => navigate(location.pathname, { replace: true })}
       >
         <Transition.Child
           as={Fragment}
@@ -121,9 +119,7 @@ export default function EditTaskModal({
 
                 <p className="text-xl font-bold">
                   Realiza cambios a una tarea en{" "}
-                  <span className="text-fuchsia-600">
-                    este formulario
-                  </span>
+                  <span className="text-fuchsia-600">este formulario</span>
                 </p>
 
                 <form
@@ -131,10 +127,7 @@ export default function EditTaskModal({
                   noValidate
                   onSubmit={handleSubmit(handleEditTask)}
                 >
-                  <TaskForm
-                    register={register}
-                    errors={errors}
-                  />
+                  <TaskForm register={register} errors={errors} />
 
                   <input
                     type="submit"

@@ -12,7 +12,6 @@ import { useEffect, useMemo, useRef } from "react";
 import io, { Socket } from "socket.io-client";
 
 const ProjectDetailsView = () => {
-
   const navigate = useNavigate();
   const params = useParams();
   const projectId = params.projectId!;
@@ -29,7 +28,10 @@ const ProjectDetailsView = () => {
   });
 
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET);
+    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
+      withCredentials: true,
+      transports: ["polling", "websocket"], // 👈 NO solo websocket
+    });
 
     socketRef.current.emit("open project", projectId);
 
@@ -55,7 +57,7 @@ const ProjectDetailsView = () => {
 
   const canEditAndDelete = useMemo(
     () => data?.manager === user?._id,
-    [data, user]
+    [data, user],
   );
 
   if (error?.message === "Token no Valido")

@@ -25,7 +25,10 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET);
+    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
+      withCredentials: true,
+      transports: ["polling", "websocket"], // 👈 NO solo websocket
+    });
 
     return () => {
       socketRef.current?.disconnect();
@@ -136,9 +139,7 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
                     <button
                       type="button"
                       className="block px-3 py-1 text-sm leading-6 text-red-500"
-                      onClick={() =>
-                        mutate({ projectId, taskId: task._id })
-                      }
+                      onClick={() => mutate({ projectId, taskId: task._id })}
                     >
                       Eliminar Tarea
                     </button>
@@ -154,4 +155,3 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
 };
 
 export default TaskCard;
-

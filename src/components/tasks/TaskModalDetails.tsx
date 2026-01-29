@@ -20,7 +20,10 @@ export default function TaskModalDetails() {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET);
+    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
+      withCredentials: true,
+      transports: ["polling", "websocket"], // 👈 NO solo websocket
+    });
 
     return () => {
       socketRef.current?.disconnect();
@@ -181,13 +184,11 @@ export default function TaskModalDetails() {
                     defaultValue={data.status}
                     className="w-full p-3 border border-gray-300"
                   >
-                    {Object.entries(statusTranslations).map(
-                      ([key, value]) => (
-                        <option key={key} value={key}>
-                          {value}
-                        </option>
-                      )
-                    )}
+                    {Object.entries(statusTranslations).map(([key, value]) => (
+                      <option key={key} value={key}>
+                        {value}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

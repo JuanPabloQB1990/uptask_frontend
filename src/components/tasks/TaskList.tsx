@@ -44,7 +44,10 @@ const TaskList = ({ tasks, canEditAndDelete }: TaskListProps) => {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET);
+    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
+      withCredentials: true,
+      transports: ["polling", "websocket"], // 👈 NO solo websocket
+    });
 
     return () => {
       socketRef.current?.disconnect();
@@ -103,12 +106,10 @@ const TaskList = ({ tasks, canEditAndDelete }: TaskListProps) => {
         return {
           ...prevData,
           tasks: prevData.tasks.map((task) =>
-            task._id === active.id
-              ? { ...task, status: newStatus }
-              : task
+            task._id === active.id ? { ...task, status: newStatus } : task,
           ),
         };
-      }
+      },
     );
   };
 
@@ -120,10 +121,7 @@ const TaskList = ({ tasks, canEditAndDelete }: TaskListProps) => {
       <div className="flex gap-5 overflow-x-scroll 2xl:overflow-auto pb-32">
         <DndContext onDragEnd={handleDragEnd}>
           {Object.entries(groupedTasks).map(([status, tasks]) => (
-            <div
-              key={status}
-              className="min-w-[300px] 2xl:min-w-0 2xl:w-1/5"
-            >
+            <div key={status} className="min-w-[300px] 2xl:min-w-0 2xl:w-1/5">
               <h3
                 className={`text-center text-xl font-light border bg-white p-3 border-t-8 ${statusStyles[status]}`}
               >

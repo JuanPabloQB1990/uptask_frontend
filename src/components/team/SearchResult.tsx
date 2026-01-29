@@ -12,7 +12,6 @@ type SearchResultProps = {
 };
 
 const SearchResult = ({ user, reset }: SearchResultProps) => {
-
   const params = useParams();
   const projectId = params.projectId!;
   const navigate = useNavigate();
@@ -20,7 +19,10 @@ const SearchResult = ({ user, reset }: SearchResultProps) => {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET);
+    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
+      withCredentials: true,
+      transports: ["polling", "websocket"], // 👈 NO solo websocket
+    });
 
     return () => {
       socketRef.current?.disconnect();
