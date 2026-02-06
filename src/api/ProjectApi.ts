@@ -1,4 +1,4 @@
-import { dashboardProjectSchema, EditProjectSchema, Project, ProjectFormData, projectSchema, ResponseQuery } from "@/types/index";
+import { dashboardProjectSchema, EditProjectSchema, Project, ProjectFormData, projectSchema, ResponseQuery, ResponseQueryProject } from "@/types/index";
 import api from "@/lib/axios";
 import { isAxiosError } from "axios";
 
@@ -19,6 +19,7 @@ export const getProjects = async() => {
     try {
         const { data } = await api("/projects")
         const response = dashboardProjectSchema.safeParse(data)
+        
         if(response.success) return response.data
         
     } catch (error) {
@@ -47,7 +48,6 @@ export const getFullProjectById = async(id : Project["_id"]) => {
     try {
         const { data } = await api(`/projects/${id}`)
         const response = projectSchema.safeParse(data)
-        console.log(response);
         
         if (response.success) {
             return response.data;
@@ -68,7 +68,8 @@ type ProjectAPIType = {
 export const updateProjectById = async({formData, projectId} : ProjectAPIType) => {
     
     try {
-        const { data } = await api.put<ResponseQuery>(`/projects/${projectId}`, formData)
+        const { data } = await api.put<ResponseQueryProject>(`/projects/${projectId}`, formData)
+        
         return data;
 
     } catch (error) {

@@ -16,7 +16,7 @@ const EditTaskData = () => {
     const { data, isError } = useQuery({
         queryKey: ["taskId", taskId],
         queryFn: () => getTaskById({projectId, taskId}),
-        enabled: !!taskId, // habilitar la funcion GetTaskById if existe el id en la url
+        enabled: !!taskId, // habilitar la funcion GetTaskById si existe el id en la url
         retry: false
     })
    

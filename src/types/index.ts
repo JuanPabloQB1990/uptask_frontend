@@ -56,7 +56,8 @@ export const taskSchema = z.object({
     completedBy: z.array(z.object({
         _id: z.string(),
         user: userSchema,
-        status: taskStatusSchema
+        status: taskStatusSchema,
+        updatedAt: z.string()
     })),
     notes: z.array(noteSchema.extend({createdBy: userSchema})),
     createdAt: z.string(),
@@ -82,7 +83,9 @@ export const projectSchema = z.object({
     description: z.string(),
     manager: z.string(userSchema.pick({_id:true})),
     tasks: z.array(taskProjectSchema),
-    team: z.array(z.object({_id: z.string()}))
+    team: z.array(z.object({_id: z.string()})),
+    createdAt: z.string(),
+    updatedAt: z.string()
 })
 
 export const dashboardProjectSchema = z.array(
@@ -92,7 +95,9 @@ export const dashboardProjectSchema = z.array(
         clientName: true,
         description: true,
         team: true,
-        manager: true
+        manager: true,
+        createdAt: true,
+        updatedAt: true
     })
 )
 
@@ -107,6 +112,11 @@ export const EditProjectSchema = projectSchema.pick({
 /** Response type */
 export type ResponseQuery = {
     taskResponse: TaskProject
+    message: string
+}
+
+export type ResponseQueryProject = {
+    projectUpdated: Project
     message: string
 }
 

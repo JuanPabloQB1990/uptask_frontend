@@ -5,54 +5,81 @@ import { Link, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { authenticateUser } from "@/api/AuthApi";
 import { toast } from "react-toastify";
-import { log } from "console";
 
 export default function LoginView() {
-
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const initialValues: UserLoginForm = {
-    email: '',
-    password: '',
-  }
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ defaultValues: initialValues })
+    email: "",
+    password: "",
+  };
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({ defaultValues: initialValues });
 
   const { mutate } = useMutation({
     mutationFn: authenticateUser,
     onError: (error) => {
-        toast.error(error.message);
+      toast.error(error.message);
     },
     onSuccess: () => {
-        toast.success("login success")
-        navigate("/")
-        reset()
-    }
-  })
+      toast.success("login success");
+      navigate("/");
+      reset();
+    },
+  });
 
-  const handleLogin = (formData: UserLoginForm) => mutate(formData)
+  const handleLogin = (formData: UserLoginForm) => mutate(formData);
 
   return (
     <>
-      <h1 className="text-5xl font-black text-white">Iniciar Sesión</h1>
-      <p className="text-2xl font-light text-white mt-5">
-        Comienza a planear tus proyectos {''}
-        <span className=" text-fuchsia-500 font-bold"> Ingresa tus datos aquí</span>
-      </p>
+      {/* Header */}
+      <header className="space-y-3">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-center">
+          Iniciar Sesión
+        </h1>
+
+        <p className="text-base sm:text-lg lg:text-2xl font-light text-center">
+          Comienza a planear tus proyectos{" "}
+          <span className="text-fuchsia-400 font-bold block sm:inline">
+            Ingresa tus datos aquí
+          </span>
+        </p>
+      </header>
+
+      {/* Form */}
       <form
         onSubmit={handleSubmit(handleLogin)}
-        className="space-y-8 p-10 mt-10 bg-white"
+        className="
+      space-y-6
+      p-5 sm:p-8 lg:p-10
+      mt-2
+      bg-white
+      rounded-lg
+      shadow-lg
+    "
         noValidate
       >
-        <div className="flex flex-col gap-5">
-          <label
-            className="font-normal text-2xl"
-          >Email</label>
+        {/* Email */}
+        <div className="flex flex-col gap-2">
+          <label className="text-base sm:text-lg font-medium">Email</label>
 
           <input
             id="email"
             type="email"
             placeholder="Email de Registro"
-            className="w-full p-3  border-gray-300 border"
+            className="
+          w-full
+          p-3 sm:p-4
+          border border-gray-300
+          rounded-md
+          focus:outline-none
+          focus:ring-2
+          focus:ring-fuchsia-500
+        "
             {...register("email", {
               required: "El Email es obligatorio",
               pattern: {
@@ -61,43 +88,71 @@ export default function LoginView() {
               },
             })}
           />
-          {errors.email && (
-            <ErrorMessage>{errors.email.message}</ErrorMessage>
-          )}
+
+          {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
         </div>
 
-        <div className="flex flex-col gap-5">
-          <label
-            className="font-normal text-2xl"
-          >Password</label>
+        {/* Password */}
+        <div className="flex flex-col gap-2">
+          <label className="text-base sm:text-lg font-medium">Password</label>
 
           <input
             type="password"
             placeholder="Password de Registro"
-            className="w-full p-3  border-gray-300 border"
+            className="
+          w-full
+          p-3 sm:p-4
+          border border-gray-300
+          rounded-md
+          focus:outline-none
+          focus:ring-2
+          focus:ring-fuchsia-500
+        "
             {...register("password", {
               required: "El Password es obligatorio",
             })}
           />
+
           {errors.password && (
             <ErrorMessage>{errors.password.message}</ErrorMessage>
           )}
         </div>
 
+        {/* Submit */}
         <input
           type="submit"
-          value='Iniciar Sesión'
-          className="bg-fuchsia-600 hover:bg-fuchsia-700 w-full p-3  text-white font-black  text-xl cursor-pointer"
+          value="Iniciar Sesión"
+          className="
+        w-full
+        bg-fuchsia-600 hover:bg-fuchsia-700
+        p-3 sm:p-4
+        text-white
+        font-black
+        text-lg sm:text-xl
+        rounded-md
+        cursor-pointer
+        transition-colors
+      "
         />
       </form>
-      <nav className="mt-10 flex flex-col space-y-4">
-          <Link to="/auth/register" className="text-center text-gray-300 font-normal">
-                No tienes Cuenta? crea una aqui
-          </Link>
-          <Link to="/auth/forgot-password" className="text-center text-gray-300 font-normal">
-                Olvidaste tu password? Reestablecer
-          </Link>
+
+      {/* Links */}
+      <nav className="mt-8 flex flex-col gap-4">
+        <Link
+          to="/auth/register"
+          className="text-center text-gray-500 text-sm sm:text-base hover:text-gray-900 transition"
+        >
+          ¿No tienes cuenta? <span className="font-bold">Crea una aquí</span>
+        </Link>
+
+        <Link
+          to="/auth/forgot-password"
+          className="text-center text-gray-500 text-sm sm:text-base hover:text-gray-900 transition"
+        >
+          ¿Olvidaste tu password?{" "}
+          <span className="font-bold">Reestablecer</span>
+        </Link>
       </nav>
     </>
-  )
+  );
 }

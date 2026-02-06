@@ -1,18 +1,16 @@
 import { getProjects } from "@/api/ProjectApi";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment, useEffect } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import DeleteProjectModal from "@/components/projects/DeleteProjectModal";
-import io, { Socket } from "socket.io-client";
+import { getSocket } from "@/lib/socket";
 
 const DashboardView = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const socketRef = useRef<Socket | null>(null);
-
   const { data: user, isLoading: authLoading } = useAuth();
 
   const { data, isLoading, error } = useQuery({
@@ -21,20 +19,23 @@ const DashboardView = () => {
     enabled: !!user,
   });
 
-  /* 🔌 Emitir cuando el usuario esté listo */
+  /* 🔌 Inicializar socket y abrir proyectos */
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
-      withCredentials: true,
-      transports: ["polling", "websocket"], // 👈 NO solo websocket
-    });
     if (!user?._id) return;
 
-    socketRef.current.emit("open projects", user._id);
+    const socket = getSocket();
+    socket.emit("open projects", user._id);
   }, [user?._id]);
 
-  /* 📡 Escuchar eventos */
+  /* 📡 Escuchar eventos en tiempo real */
   useEffect(() => {
     if (!user?._id) return;
+
+    const socket = getSocket();
+
+    const handleEditProject = () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    };
 
     const handleAddedMember = (userId: string) => {
       if (user._id === userId) {
@@ -49,124 +50,151 @@ const DashboardView = () => {
       }
     };
 
-    socketRef.current?.on("added member", handleAddedMember);
-    socketRef.current?.on("deleted member", handleDeletedMember);
+    socket.on("edited project", handleEditProject);
+    socket.on("added member", handleAddedMember);
+    socket.on("deleted member", handleDeletedMember);
 
     return () => {
-      socketRef.current?.off("added member", handleAddedMember);
-      socketRef.current?.off("deleted member", handleDeletedMember);
+      socket.off("edited project", handleEditProject);
+      socket.off("added member", handleAddedMember);
+      socket.off("deleted member", handleDeletedMember);
     };
   }, [user?._id, navigate, queryClient]);
 
-  if (isLoading || authLoading) return "Cargando...";
+  if (isLoading || authLoading) return <p>Cargando...</p>;
+
   if (error?.message === "Token no Valido")
     return <Navigate to="/auth/login" />;
 
   if (!data || !user) return null;
 
   return (
-    <div>
-      <h1 className="text-5xl font-black">Mis Proyectos</h1>
-      <p className="text-2xl font-light text-gray-500 mt-5">
-        Maneja y administra tus proyectos
-      </p>
+    <div className="space-y-8">
+      {/* Header */}
+      <header className="space-y-3">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black">
+          Mis Proyectos
+        </h1>
 
-      <nav className="my-5">
+        <p className="text-base sm:text-lg lg:text-2xl text-gray-500">
+          Maneja y administra tus proyectos
+        </p>
+      </header>
+
+      {/* Action */}
+      <nav>
         <Link
-          className="bg-purple-400 hover:bg-purple-500 px-10 py-3 text-white text-xl font-bold cursor-pointer transition-colors"
+          className="
+        inline-block w-full sm:w-auto
+        bg-purple-400 hover:bg-purple-500
+        px-6 py-3
+        text-white text-base sm:text-lg font-bold
+        rounded-lg
+        transition-colors text-center
+      "
           to="/projects/create"
         >
           Nuevo Proyecto
         </Link>
       </nav>
 
+      {/* List */}
       {data.length ? (
-        <ul className="divide-y divide-gray-100 border border-gray-100 mt-10 bg-white shadow-lg">
+        <ul className="divide-y divide-gray-300 border border-gray-100 bg-white shadow-lg rounded-lg overflow-hidden">
           {data.map((project) => (
             <li
               key={project._id}
-              className="flex justify-between gap-x-6 px-5 py-10"
+              className="
+            flex flex-col sm:flex-row
+            gap-6
+            px-4 sm:px-6
+            py-6
+          "
             >
-              <div className="flex min-w-0 gap-x-4">
-                <div className="min-w-0 flex-auto space-y-2">
-                  <div className="mb-2">
+              {/* Info */}
+              <div className="flex-1 space-y-3">
+                {/* Role */}
+                <div className="flex flex-row justify-between">
+                  <div className="py-2">
                     {project.manager === user._id ? (
-                      <p className="font-bold text-xs uppercase bg-indigo-50 text-indigo-500 border-2 border-indigo-500 rounded-lg inline-block py-1 px-5">
+                      <p className="inline-block font-bold text-xs uppercase bg-indigo-50 text-indigo-500 border border-indigo-500 rounded-lg py-1 px-3">
                         Manager
                       </p>
                     ) : (
-                      <p className="font-bold text-xs uppercase bg-green-50 text-green-500 border-2 border-green-500 rounded-lg inline-block py-1 px-5">
+                      <p className="inline-block font-bold text-xs uppercase bg-green-50 text-green-500 border border-green-500 rounded-lg py-1 px-3">
                         Colaborador
                       </p>
                     )}
                   </div>
+                  {/* Menu */}
+                  <Menu as="div" className="relative self-start sm:self-center">
+                    <Menu.Button className="p-2 rounded-full hover:bg-gray-100">
+                      <EllipsisVerticalIcon className="h-6 w-6 text-gray-500" />
+                    </Menu.Button>
 
-                  <Link
-                    to={`/projects/${project._id}`}
-                    className="text-gray-600 hover:underline text-3xl font-bold"
-                  >
-                    {project.projectName}
-                  </Link>
+                    <Transition as={Fragment}>
+                      <Menu.Items className="absolute right-0 z-20 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black/5">
+                        <Menu.Item>
+                          <Link
+                            to={`/projects/${project._id}`}
+                            className="block px-4 py-2 text-sm hover:bg-gray-100"
+                          >
+                            Ver Proyecto
+                          </Link>
+                        </Menu.Item>
 
-                  <p className="text-sm text-gray-400">
-                    Cliente: {project.clientName}
-                  </p>
-                  <p className="text-sm text-gray-400">{project.description}</p>
+                        {project.manager === user._id && (
+                          <>
+                            <Menu.Item>
+                              <Link
+                                to={`/projects/${project._id}/edit`}
+                                className="block px-4 py-2 text-sm hover:bg-gray-100"
+                              >
+                                Editar Proyecto
+                              </Link>
+                            </Menu.Item>
+
+                            <Menu.Item>
+                              <button
+                                className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50"
+                                onClick={() =>
+                                  navigate(
+                                    location.pathname +
+                                      `?deleteProject=${project._id}`,
+                                  )
+                                }
+                              >
+                                Eliminar Proyecto
+                              </button>
+                            </Menu.Item>
+                          </>
+                        )}
+                      </Menu.Items>
+                    </Transition>
+                  </Menu>
                 </div>
-              </div>
 
-              <div className="flex shrink-0 items-center gap-x-6">
-                <Menu as="div" className="relative flex-none">
-                  <Menu.Button className="-m-2.5 p-2.5 text-gray-500 hover:text-gray-900">
-                    <EllipsisVerticalIcon className="h-9 w-9" />
-                  </Menu.Button>
+                {/* Title */}
+                <Link
+                  to={`/projects/${project._id}`}
+                  className="block text-xl sm:text-2xl lg:text-3xl font-bold text-gray-700 hover:underline break-words"
+                >
+                  {project.projectName}
+                </Link>
 
-                  <Transition as={Fragment}>
-                    <Menu.Items className="absolute right-0 z-10 mt-2 w-56 bg-white rounded-md shadow-lg">
-                      <Menu.Item>
-                        <Link
-                          to={`/projects/${project._id}`}
-                          className="block px-3 py-1 text-sm"
-                        >
-                          Ver Proyecto
-                        </Link>
-                      </Menu.Item>
+                <p className="text-sm text-gray-400">
+                  Cliente: {project.clientName}
+                </p>
 
-                      {project.manager === user._id && (
-                        <>
-                          <Menu.Item>
-                            <Link
-                              to={`/projects/${project._id}/edit`}
-                              className="block px-3 py-1 text-sm"
-                            >
-                              Editar Proyecto
-                            </Link>
-                          </Menu.Item>
-
-                          <Menu.Item>
-                            <button
-                              className="block px-3 py-1 text-sm text-red-500"
-                              onClick={() =>
-                                navigate(
-                                  location.pathname +
-                                    `?deleteProject=${project._id}`,
-                                )
-                              }
-                            >
-                              Eliminar Proyecto
-                            </button>
-                          </Menu.Item>
-                        </>
-                      )}
-                    </Menu.Items>
-                  </Transition>
-                </Menu>
+                <p className="text-sm text-gray-400 line-clamp-2">
+                  {project.description}
+                </p>
               </div>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-center py-20">
+        <p className="text-center py-20 text-gray-500">
           No hay proyectos aún{" "}
           <Link to="/projects/create" className="text-fuchsia-500 font-bold">
             Crear Proyecto

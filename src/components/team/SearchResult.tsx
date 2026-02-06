@@ -1,10 +1,9 @@
 import { addMemberToProject } from "@/api/TeamApi";
 import { TeamMember } from "@/types/index";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { io, Socket } from "socket.io-client";
+import { getSocket } from "@/lib/socket"; // 👈 Singleton
 
 type SearchResultProps = {
   user: TeamMember;
@@ -12,56 +11,78 @@ type SearchResultProps = {
 };
 
 const SearchResult = ({ user, reset }: SearchResultProps) => {
-  const params = useParams();
-  const projectId = params.projectId!;
+  const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
 
-  const socketRef = useRef<Socket | null>(null);
+  /* -------------------- SOCKET -------------------- */
+  const socket = getSocket(); // ✅ conexión única
 
-  useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
-      withCredentials: true,
-      transports: ["polling", "websocket"], // 👈 NO solo websocket
-    });
-
-    return () => {
-      socketRef.current?.disconnect();
-    };
-  }, []);
-
+  /* -------------------- MUTATION -------------------- */
   const queryClient = useQueryClient();
 
   const { mutate } = useMutation({
     mutationFn: addMemberToProject,
-    onError: (error) => {
+    onError: (error: Error) => {
       toast.error(error.message);
     },
     onSuccess: (data) => {
       toast.success(data?.message);
       reset();
       navigate(location.pathname, { replace: true });
-      queryClient.invalidateQueries({ queryKey: ["projectTeam", projectId] });
 
-      // emitir evento al backend
-      socketRef.current?.emit("new member", {
+      queryClient.invalidateQueries({
+        queryKey: ["projectTeam", projectId],
+      });
+
+      // 🔥 emitir evento al backend
+      socket.emit("new member", {
         userId: user._id,
-        projectId,
+        project: projectId,
       });
     },
   });
 
   const handleAddUserToProject = () => {
-    mutate({ projectId, id: user._id });
+    mutate({ projectId: projectId!, id: user._id });
   };
 
   return (
-    <div>
-      <p className="mt-10 text-center font-bold">Resultado:</p>
-      <div className="flex justify-between items-center">
-        <p>{user.name}</p>
+    <div className="mt-8 sm:mt-10">
+      <p className="text-center font-bold text-base sm:text-lg mb-4">
+        Resultado:
+      </p>
+
+      <div
+        className="
+      flex flex-col sm:flex-row
+      items-start sm:items-center
+      justify-between
+      gap-4
+      bg-white
+      border
+      rounded-xl
+      p-4 sm:p-6
+      shadow-sm
+    "
+      >
+        <p className="text-base sm:text-lg font-medium text-gray-800">
+          {user.name}
+        </p>
+
         <button
           onClick={handleAddUserToProject}
-          className="text-purple-600 hover:bg-purple-100 px-10 py-3 font-bold cursor-pointer"
+          className="
+        w-full sm:w-auto
+        text-purple-600
+        hover:text-purple-800
+        bg-purple-50 hover:bg-purple-100
+        px-6 sm:px-10
+        py-3
+        font-bold
+        rounded-lg
+        transition-colors
+        cursor-pointer
+      "
         >
           Agregar
         </button>

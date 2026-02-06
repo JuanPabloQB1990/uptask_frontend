@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import {
   Navigate,
@@ -13,30 +13,19 @@ import { formatDate } from "@/utils/utils";
 import { statusTranslations } from "@/locales/es";
 import { TaskStatus } from "@/types/index";
 import NotesPanel from "../notes/NotesPanel";
-import { io, Socket } from "socket.io-client";
+import { getSocket } from "@/lib/socket"; // 👈 Singleton
 
 export default function TaskModalDetails() {
   /* -------------------- SOCKET -------------------- */
-  const socketRef = useRef<Socket | null>(null);
-
-  useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
-      withCredentials: true,
-      transports: ["polling", "websocket"], // 👈 NO solo websocket
-    });
-
-    return () => {
-      socketRef.current?.disconnect();
-    };
-  }, []);
+  const socket = getSocket(); // ✅ instancia única global
 
   /* -------------------- ROUTER -------------------- */
-  const params = useParams();
-  const projectId = params.projectId!;
+  const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+
   const queryParams = new URLSearchParams(location.search);
-  const taskId = queryParams.get("viewTask")!;
+  const taskId = queryParams.get("viewTask");
   const show = Boolean(taskId);
 
   /* -------------------- QUERY -------------------- */
@@ -44,20 +33,22 @@ export default function TaskModalDetails() {
 
   const { data, isError, error } = useQuery({
     queryKey: ["task", taskId],
-    queryFn: () => getTaskById({ projectId, taskId }),
+    queryFn: () => getTaskById({ projectId: projectId!, taskId: taskId! }),
     enabled: !!taskId,
     retry: false,
   });
 
   /* -------------------- SOCKET EVENTS -------------------- */
   useEffect(() => {
-    if (!socketRef.current || !taskId) return;
+    if (!taskId) return;
 
-    socketRef.current.emit("open task", taskId);
-  }, [taskId]);
+     console.log(data);
+    
+    socket.emit("open task", taskId);
+  }, [taskId, socket]);
 
   useEffect(() => {
-    if (!socketRef.current || !data?._id) return;
+    if (!data?._id || !taskId) return;
 
     const handleAddedNote = (task: string) => {
       if (task === data._id) {
@@ -71,14 +62,14 @@ export default function TaskModalDetails() {
       }
     };
 
-    socketRef.current.on("added note", handleAddedNote);
-    socketRef.current.on("deleted note", handleDeletedNote);
+    socket.on("added note", handleAddedNote);
+    socket.on("deleted note", handleDeletedNote);
 
     return () => {
-      socketRef.current?.off("added note", handleAddedNote);
-      socketRef.current?.off("deleted note", handleDeletedNote);
+      socket.off("added note", handleAddedNote);
+      socket.off("deleted note", handleDeletedNote);
     };
-  }, [data?._id, taskId, queryClient]);
+  }, [data?._id, taskId, queryClient, socket]);
 
   /* -------------------- MUTATION -------------------- */
   const { mutate } = useMutation({
@@ -90,6 +81,12 @@ export default function TaskModalDetails() {
       toast.success(data?.message);
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["task", taskId] });
+
+      // 🔥 emitir evento usando singleton
+      socket.emit("update status task", {
+        ...data?.taskResponse,
+        project: projectId,
+      });
     },
   });
 
@@ -97,8 +94,8 @@ export default function TaskModalDetails() {
     const status = e.target.value as TaskStatus;
 
     mutate({
-      projectId,
-      taskId,
+      projectId: projectId!,
+      taskId: taskId!,
       status,
     });
   };
@@ -132,7 +129,7 @@ export default function TaskModalDetails() {
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
+          <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -142,47 +139,61 @@ export default function TaskModalDetails() {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl rounded-2xl bg-white p-16 shadow-xl">
-                <p className="text-sm text-slate-400">
-                  Agregada el: {formatDate(data.createdAt)}
-                </p>
-                <p className="text-sm text-slate-400">
-                  Última actualización: {formatDate(data.updatedAt)}
-                </p>
+              {/* Ajustamos paddings: p-6 en móvil, p-10 en tablet, p-16 en desktop */}
+              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 sm:p-10 lg:p-16 text-left align-middle shadow-xl transition-all">
+                <div className="space-y-1">
+                  <p className="text-xs sm:text-sm text-slate-400">
+                    Agregada el: {formatDate(data.createdAt)}
+                  </p>
+                  <p className="text-xs sm:text-sm text-slate-400">
+                    Última actualización: {formatDate(data.updatedAt)}
+                  </p>
+                </div>
 
-                <Dialog.Title className="font-black text-4xl text-slate-600 my-5">
+                <Dialog.Title className="font-black text-2xl sm:text-3xl lg:text-4xl text-slate-600 my-5 break-words">
                   {data.name}
                 </Dialog.Title>
 
-                <p className="text-lg mb-4">
+                <p className="text-base sm:text-lg mb-4 text-slate-700">
                   <span className="font-bold text-slate-500">Descripción:</span>{" "}
                   {data.description}
                 </p>
 
                 {data.completedBy.length > 0 && (
-                  <>
-                    <p className="font-bold text-2xl my-6 text-slate-600">
+                  <div className="mt-8">
+                    <p className="font-bold text-xl sm:text-2xl my-4 text-slate-600">
                       Historial de Cambios
                     </p>
-                    <ul className="list-decimal pl-5 space-y-2">
+                    {/* En móvil reducimos un poco el texto para que los emails no se corten */}
+                    <ul className="list-decimal pl-5 space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                       {data.completedBy.map((log) => (
-                        <li key={log._id}>
+                        <li key={log._id} className="text-sm sm:text-base">
                           <span className="font-bold text-slate-500">
                             {statusTranslations[log.status]} por{" "}
                           </span>
-                          {log.user.name} - {log.user.email}
+                          <span className="block sm:inline">
+                            {log.user.name}
+                          </span>
+                          <span className="text-slate-400 text-xs sm:text-sm block sm:ml-1 sm:inline">
+                            ({log.user.email})
+                          </span>
+                          <span className="text-slate-400 text-xs sm:text-sm block sm:ml-1 sm:inline">
+                            ({formatDate(log.updatedAt)})
+                          </span>
                         </li>
                       ))}
                     </ul>
-                  </>
+                  </div>
                 )}
 
-                <div className="my-6 space-y-2">
-                  <label className="font-bold">Estado actual</label>
+                <div className="my-8 space-y-3">
+                  <label className="font-bold text-slate-600">
+                    Estado actual
+                  </label>
                   <select
                     onChange={handleChange}
                     defaultValue={data.status}
-                    className="w-full p-3 border border-gray-300"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 outline-none transition-all"
                   >
                     {Object.entries(statusTranslations).map(([key, value]) => (
                       <option key={key} value={key}>
@@ -192,7 +203,10 @@ export default function TaskModalDetails() {
                   </select>
                 </div>
 
-                <NotesPanel notes={data.notes} />
+                {/* Divisor visual antes de las notas */}
+                <div className="border-t border-gray-100 pt-6">
+                  <NotesPanel notes={data.notes} />
+                </div>
               </Dialog.Panel>
             </Transition.Child>
           </div>

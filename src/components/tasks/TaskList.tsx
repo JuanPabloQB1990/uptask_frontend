@@ -7,8 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateStatusTaskById } from "@/api/TaskApi";
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
-import { useEffect, useRef } from "react";
-import { io, Socket } from "socket.io-client";
+import { getSocket } from "@/lib/socket"; // 👈 Singleton
 
 type TaskListProps = {
   tasks: TaskProject[];
@@ -37,22 +36,8 @@ const statusStyles: Record<string, string> = {
 
 const TaskList = ({ tasks, canEditAndDelete }: TaskListProps) => {
   /* -------------------- ROUTER -------------------- */
-  const params = useParams();
-  const projectId = params.projectId!;
-
-  /* -------------------- SOCKET -------------------- */
-  const socketRef = useRef<Socket | null>(null);
-
-  useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
-      withCredentials: true,
-      transports: ["polling", "websocket"], // 👈 NO solo websocket
-    });
-
-    return () => {
-      socketRef.current?.disconnect();
-    };
-  }, []);
+  const { projectId } = useParams<{ projectId: string }>();
+  const socket = getSocket(); // ✅ UNA sola instancia global
 
   /* -------------------- GROUP TASKS -------------------- */
   const groupedTasks = tasks.reduce<GroupedTasks>((acc, task) => {
@@ -76,8 +61,8 @@ const TaskList = ({ tasks, canEditAndDelete }: TaskListProps) => {
         queryKey: ["project", projectId],
       });
 
-      // emitir evento socket
-      socketRef.current?.emit("update status task", {
+      // 🔥 emitir evento usando singleton
+      socket.emit("update status task", {
         ...data?.taskResponse,
         project: projectId,
       });
@@ -87,7 +72,7 @@ const TaskList = ({ tasks, canEditAndDelete }: TaskListProps) => {
   /* -------------------- DND HANDLER -------------------- */
   const handleDragEnd = (e: DragEndEvent) => {
     const { over, active } = e;
-    if (!over) return;
+    if (!over || !projectId) return;
 
     const newStatus = over.id as TaskStatus;
 
@@ -121,15 +106,13 @@ const TaskList = ({ tasks, canEditAndDelete }: TaskListProps) => {
       <div className="flex gap-5 overflow-x-scroll 2xl:overflow-auto pb-32">
         <DndContext onDragEnd={handleDragEnd}>
           {Object.entries(groupedTasks).map(([status, tasks]) => (
-            <div key={status} className="min-w-[300px] 2xl:min-w-0 2xl:w-1/5">
+            <div key={status} className="min-w-[300px] 2xl:w-1/5">
               <h3
                 className={`text-center text-xl font-light border bg-white p-3 border-t-8 ${statusStyles[status]}`}
               >
                 {statusTranslations[status]}
               </h3>
-
               <DropTask status={status} />
-
               <ul className="mt-5 space-y-5">
                 {tasks.length === 0 ? (
                   <li className="text-gray-500 text-center pt-3">

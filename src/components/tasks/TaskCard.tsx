@@ -4,11 +4,10 @@ import { useDraggable } from "@dnd-kit/core";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Fragment } from "react/jsx-runtime";
-import { io, Socket } from "socket.io-client";
+import { getSocket } from "@/lib/socket";
 
 type TaskCardProps = {
   task: TaskProject;
@@ -21,19 +20,8 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
     id: task._id,
   });
 
-  /* -------------------- SOCKET -------------------- */
-  const socketRef = useRef<Socket | null>(null);
-
-  useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
-      withCredentials: true,
-      transports: ["polling", "websocket"], // 👈 NO solo websocket
-    });
-
-    return () => {
-      socketRef.current?.disconnect();
-    };
-  }, []);
+  /* -------------------- SOCKET (Singleton) -------------------- */
+  const socket = getSocket();
 
   /* -------------------- ROUTER -------------------- */
   const navigate = useNavigate();
@@ -55,8 +43,8 @@ const TaskCard = ({ task, canEditAndDelete }: TaskCardProps) => {
         queryKey: ["project", projectId],
       });
 
-      // emitir evento socket
-      socketRef.current?.emit("delete task", {
+      // 📡 emitir evento socket
+      socket.emit("delete task", {
         ...task,
         project: projectId,
       });

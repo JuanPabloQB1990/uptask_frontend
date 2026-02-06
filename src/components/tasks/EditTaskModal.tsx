@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Task, TaskFormData } from "@/types/index";
@@ -7,7 +7,7 @@ import TaskForm from "./TaskForm";
 import { toast } from "react-toastify";
 import { updateTaskById } from "@/api/TaskApi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { io, Socket } from "socket.io-client";
+import { getSocket } from "@/lib/socket";
 
 type EditTaskModalProps = {
   task: Task;
@@ -20,19 +20,8 @@ export default function EditTaskModal({ task, taskId }: EditTaskModalProps) {
   const params = useParams();
   const projectId = params.projectId!;
 
-  /* -------------------- SOCKET -------------------- */
-  const socketRef = useRef<Socket | null>(null);
-
-  useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL_SOCKET, {
-      withCredentials: true,
-      transports: ["polling", "websocket"], // 👈 NO solo websocket
-    });
-
-    return () => {
-      socketRef.current?.disconnect();
-    };
-  }, []);
+  /* -------------------- SOCKET (Singleton) -------------------- */
+  const socket = getSocket();
 
   /* -------------------- FORM -------------------- */
   const {
@@ -66,7 +55,7 @@ export default function EditTaskModal({ task, taskId }: EditTaskModalProps) {
       });
 
       // emitir evento socket
-      socketRef.current?.emit("edit task", taskId);
+      socket.emit("edit task", task);
 
       reset();
       navigate(location.pathname, { replace: true });
@@ -102,7 +91,7 @@ export default function EditTaskModal({ task, taskId }: EditTaskModalProps) {
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
+          <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -112,27 +101,29 @@ export default function EditTaskModal({ task, taskId }: EditTaskModalProps) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl rounded-2xl bg-white p-16 shadow-xl">
-                <Dialog.Title className="font-black text-4xl my-5">
+              {/* Ajuste de ancho y padding responsivo */}
+              <Dialog.Panel className="w-full max-w-full sm:max-w-2xl lg:max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 sm:p-10 lg:p-16 text-left align-middle shadow-xl transition-all">
+                <Dialog.Title className="font-black text-2xl sm:text-3xl lg:text-4xl text-slate-800 my-5">
                   Editar Tarea
                 </Dialog.Title>
 
-                <p className="text-xl font-bold">
+                <p className="text-lg sm:text-xl font-bold text-slate-600">
                   Realiza cambios a una tarea en{" "}
                   <span className="text-fuchsia-600">este formulario</span>
                 </p>
 
                 <form
-                  className="mt-10 space-y-3"
+                  className="mt-8 sm:mt-10 space-y-5"
                   noValidate
                   onSubmit={handleSubmit(handleEditTask)}
                 >
+                  {/* TaskForm debe ser internamente responsivo (flex-col) */}
                   <TaskForm register={register} errors={errors} />
 
                   <input
                     type="submit"
                     value="Guardar Cambios"
-                    className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 p-3 text-white font-black text-xl cursor-pointer"
+                    className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 p-3 text-white font-black text-lg sm:text-xl cursor-pointer transition-colors rounded-lg shadow-md hover:shadow-lg"
                   />
                 </form>
               </Dialog.Panel>

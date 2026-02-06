@@ -5,9 +5,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createNote } from "@/api/NoteApi";
 import { toast } from "react-toastify";
 import { useLocation, useParams } from "react-router-dom";
-import { socket } from "@/lib/socket";
+import { getSocket } from "@/lib/socket";
 
 const AddNoteForm = () => {
+  /* -------------------- SOCKET (Singleton) -------------------- */
+  const socket = getSocket();
 
   const params = useParams();
   const projectId = params.projectId!;
