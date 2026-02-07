@@ -5,8 +5,8 @@ Está desarrollada con **React, TypeScript, Vite, Tailwind CSS** y se integra co
 
 La aplicación está diseñada para gestionar proyectos, tareas y equipo colaborativo con una experiencia de usuario fluida y moderna.
 
-url video instruciones configuracion: https://youtu.be/9toS3fNNs34
-url video registro y verificacion de cuenta: https://youtu.be/uBVymFhi8LA
+📌 url video instruciones configuracion: https://youtu.be/9toS3fNNs34
+📌 url video registro y verificacion de cuenta: https://youtu.be/uBVymFhi8LA
 
 ---
 
