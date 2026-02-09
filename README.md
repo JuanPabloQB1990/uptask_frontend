@@ -60,6 +60,11 @@ Antes de instalar, asegúrate de tener:
 - crear proyecto: https://youtu.be/zXS4P7j6vww
 - crear tarea: https://youtu.be/Mb-WmCWvpus
 - editar tarea: https://youtu.be/MfyuQp2nuMk
+- crear y eliminar nota: https://youtu.be/MSjrbO4SgMU
+- agregar y eliminar miembros: https://youtu.be/6BltQfmYTt0
+- cambios en tiempo real - miembros: https://youtu.be/a-RryNmIYtg
+- cambios en tiempo real - tareas: https://youtu.be/83rDW_PKrRk
+- editar perfil - cambio de password: https://youtu.be/YfXAWSWdpzA
 
 ### 1. Clonar el repositorio
 
