@@ -51,7 +51,20 @@ Antes de instalar, asegúrate de tener:
 
 ---
 
-## 🛠️ Instalación y ejecución
+## 🛠️ Instalación y ejecución en local
+
+## Videos tutoriales
+
+- url video instruciones configuracion: https://youtu.be/9toS3fNNs34
+- url video registro y verificacion de cuenta: https://youtu.be/uBVymFhi8LA
+- crear proyecto: https://youtu.be/zXS4P7j6vww
+- crear tarea: https://youtu.be/Mb-WmCWvpus
+- editar tarea: https://youtu.be/MfyuQp2nuMk
+- crear y eliminar nota: https://youtu.be/MSjrbO4SgMU
+- agregar y eliminar miembros: https://youtu.be/6BltQfmYTt0
+- cambios en tiempo real - miembros: https://youtu.be/a-RryNmIYtg
+- cambios en tiempo real - tareas: https://youtu.be/83rDW_PKrRk
+- editar perfil - cambio de password: https://youtu.be/YfXAWSWdpzA
 
 ### 1. Clonar el repositorio
 
@@ -59,7 +72,7 @@ Antes de instalar, asegúrate de tener:
 git clone https://github.com/JuanPabloQB1990/uptask_frontend.git
 ```
 
-2. Instalar dependencias
+## 2. Instalar dependencias
 
 ```js
 cd uptask_frontend
@@ -69,9 +82,9 @@ cd uptask_frontend
 npm install
 ```
 
-3. Crear archivo de variables de entorno
+## 3. Crear archivo de variables de entorno
 
-4. Ajusta tus variables de entorno
+## 4. Ajusta tus variables de entorno
 
 Ejemplo:
 ```js
@@ -81,7 +94,7 @@ VITE_API_URL_SOCKET=http://localhost:5000
 
 Estas variables deben coincidir con la URL donde se despliega tu backend.
 
-5. Ejecutar en desarrollo
+## 5. Ejecutar en desarrollo
 ```js
 npm run dev
 ```
@@ -92,11 +105,3 @@ El proyecto correrá en:
 http://localhost:5173
 ```
 
-## 🚀 Como utilizar la APP
-
-1. crear cuenta: ingrese su nombre, correo y contraseña
-   nota: si esta corriendo el proyecto de manera local puede hacerlo con un correo no real, si esta corriendo el proyecto desde el link debe ingresar un correo real.
-
-2. Revizar en el sandbox de mailtrap el correo recivido para verificar y autenticar la cuenta , dar click en el boton autenticar y luego ingresa el codigo suministrado por la APP.
-
-3. Ya la cuenta verificada puede ingresar, crear y administrar proyectos.
