@@ -27,11 +27,11 @@ export default function ConfirmAccountView() {
     const handleCompleted = (token: ConfirmToken["token"]) =>  mutate({token})
   return (
    <>
-  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white text-center">
+  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-center">
     Confirma tu Cuenta
   </h1>
 
-  <p className="text-base sm:text-lg lg:text-2xl font-light text-white mt-4 sm:mt-5 text-center">
+  <p className="text-base sm:text-lg lg:text-2xl font-light mt-4 sm:mt-5 text-center">
     Ingresa el código que recibiste{" "}
     <span className="text-fuchsia-500 font-bold">por e-mail</span>
   </p>
@@ -55,7 +55,7 @@ export default function ConfirmAccountView() {
             className="
               w-10 h-10 
               sm:w-12 sm:h-12 
-              lg:w-14 lg:h-14
+              lg:w-12 lg:h-14
               text-center text-lg sm:text-xl
               rounded-lg border border-gray-300
               focus:outline-none focus:ring-2 focus:ring-fuchsia-500

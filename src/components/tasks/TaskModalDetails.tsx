@@ -42,8 +42,6 @@ export default function TaskModalDetails() {
   useEffect(() => {
     if (!taskId) return;
 
-     console.log(data);
-    
     socket.emit("open task", taskId);
   }, [taskId, socket]);
 

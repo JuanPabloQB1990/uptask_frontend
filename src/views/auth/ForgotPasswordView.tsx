@@ -28,7 +28,7 @@ export default function ForgotPasswordView() {
   return (
     <>
   {/* Ajuste de títulos: de 3xl en móvil a 5xl en desktop */}
-  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-center sm:text-left">
+  <h1 className="text-3xl text-center sm:text-4xl lg:text-5xl font-black sm:text-left">
     Reestablece tu password
   </h1>
   <p className="text-xl sm:text-2xl font-light mt-5 text-center">
