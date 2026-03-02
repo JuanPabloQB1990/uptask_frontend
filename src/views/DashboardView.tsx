@@ -34,16 +34,20 @@ const DashboardView = () => {
     const socket = getSocket();
 
     const handleEditProject = () => {
+      console.log("my boss has edited the project");
       queryClient.invalidateQueries({ queryKey: ["projects"] });
     };
 
     const handleAddedMember = (userId: string) => {
+      console.log("my boss has added me");
       if (user._id === userId) {
         queryClient.invalidateQueries({ queryKey: ["projects"] });
       }
     };
 
     const handleDeletedMember = (userId: string) => {
+      console.log("my boss has deleted me");
+      
       if (user._id === userId) {
         queryClient.invalidateQueries({ queryKey: ["projects"] });
         navigate("/");

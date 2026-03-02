@@ -30,7 +30,9 @@ const EditProjectForm = ({ data, projectId }: EditProjectFormProps) => {
   });
 
   const queryClient = useQueryClient();
+
   const { mutate } = useMutation({
+    
     mutationFn: updateProjectById,
     onError: (error) => {
       toast.error(error.message);

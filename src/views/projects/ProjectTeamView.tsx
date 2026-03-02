@@ -39,7 +39,7 @@ const ProjectTeamView = () => {
       queryClient.invalidateQueries({ queryKey: ["projectTeam", projectId] });
 
       const socket = getSocket();
-      socket.emit("delete member", { projectId, userId });
+      socket.emit("delete member", userId);
 
       setUserId("");
     },

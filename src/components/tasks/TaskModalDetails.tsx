@@ -49,12 +49,16 @@ export default function TaskModalDetails() {
     if (!data?._id || !taskId) return;
 
     const handleAddedNote = (task: string) => {
+      console.log("someone has added a note");
+      
       if (task === data._id) {
         queryClient.invalidateQueries({ queryKey: ["task", taskId] });
       }
     };
 
     const handleDeletedNote = (task: string) => {
+      console.log("someone has deleted a note");
+      
       if (task === data._id) {
         queryClient.invalidateQueries({ queryKey: ["task", taskId] });
       }

@@ -12,6 +12,7 @@ import { useEffect, useMemo } from "react";
 import { getSocket } from "@/lib/socket";
 
 const ProjectDetailsView = () => {
+
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const { data: user, isLoading: authLoading } = useAuth();
@@ -24,21 +25,24 @@ const ProjectDetailsView = () => {
     queryFn: () => getFullProjectById(projectId!),
     retry: false,
   });
-
+  
   useEffect(() => {
     if (!projectId || !user?._id) return;
    
-    
     // 🟢 Unirse a rooms
     socket.emit("open project", projectId);
     socket.emit("open projects", user._id);
 
     const handleEditProject = () => {
+      console.log("my boss has edited the project");
+      
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
     };
 
     const handleTaskUpdate = (task: Task) => {
+      console.log("someone has edited the task");
+
       if (task.project === projectId) {
         queryClient.invalidateQueries({ queryKey: ["project", projectId] });
         queryClient.invalidateQueries({ queryKey: ["projects"] });
